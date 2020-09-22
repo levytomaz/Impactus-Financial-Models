@@ -101,16 +101,26 @@ class series:
 #################################################################################
 def GetDFPrices(Tickers, start, end, Ptype):
 
-    sday, smonth, syear = map(int, start.split('/'))
-    start = dt.datetime(syear, smonth, sday)
-
-    if end == '':
-        end = date.today()
-
+    if isinstance(start, str):
+        sday, smonth, syear = map(int, start.split('/'))
+        start = dt.datetime(syear, smonth, sday)
+    elif isinstance(start, dt.date):
+        pass
     else:
-        eday, emonth, eyear = map(int, end.split('/'))
-        end = dt.datetime(eyear, emonth, eday)
+        raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date)
 
+    if isinstance(end, str):
+        if end == '':
+            end = date.today()
+        else:
+            eday, emonth, eyear = map(int, end.split('/'))
+            end = dt.datetime(eyear, emonth, eday)
+                         
+    elif isinstance(end, dt.date):
+            pass
+    else:                 
+        raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date)
+                         
     df1 = series(Tickers[0], Ptype, start, end).Treat()
 
     i = 1
