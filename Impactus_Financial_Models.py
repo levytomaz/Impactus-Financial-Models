@@ -170,7 +170,7 @@ class seriesAV:
             self.xyz = ['high', 'low', 'close', 'volume']
         elif self.Ptype == 'close':
             self.xyz = ['high', 'low', 'open', 'volume']
-
+        
         self.prices = web.DataReader(ticker, 'av-daily', self.start, self.end, api_key=AVkey)
 
     def DropColumns(self):
@@ -193,28 +193,108 @@ class seriesAV:
         return self.prices
 
 #################################################################################
-def GetAVPrices(Tickers, start, end, Ptype=None):
+class seriesAVForex:
+    def __init__(self, ticker, Ptype, start, end):
+        self.ticker = ticker
+        
+        if Ptype == 'Adj Close':
+            self.Ptype = 'close'
+        elif Ptype == 'Open':
+            self.Pytpe = 'open'
+        else:
+            raise ValueError('O Ptype tem que ser Adj Close ou Open, se quiser adiconar mais um, trate de abrir o Impactus_Financial_Models e alterar')
+            
+        self.start = start
+        self.end = end
 
-    sday, smonth, syear = map(int, start.split('/'))
-    start = dt.datetime(syear, smonth, sday)
+        if self.Ptype == 'open':
+            self.xyz = ['high', 'low', 'close']
+        elif self.Ptype == 'close':
+            self.xyz = ['high', 'low', 'open']
+        print(self.ticker)
+        self.fr, self.to = map(str, self.ticker.split('/'))
 
-    if end == '':
-        end = date.today()
+        url = f'https://www.alphavantage.co/query?function=FX_DAILY&from_symbol={self.fr}&to_symbol={self.to}&outputsize=full&apikey={AVkey}'
+        
+        ser = pd.read_json(url).iloc[6:, 1].iloc[::-1]
+        self.prices = pd.DataFrame(ser.to_list(), index=ser.index)
+        self.prices.columns = ['open', 'high', 'low', 'close']
+        self.prices.index = pd.to_datetime(self.prices.index)
+        self.prices = self.prices.loc[self.start:self.end, :]
+        print(self.prices, '\n', self.Ptype)
+
+    def DropColumns(self):
+        self.prices.drop(self.xyz, axis=1, inplace=True)
+
+    def DropNaN(self):
+        self.prices.dropna(subset=[self.Ptype], axis=0, inplace=True)
+
+    def Round(self):
+        print(self.prices[self.Ptype], type(self.prices[self.Ptype]))
+        self.prices[self.Ptype] = self.prices[self.Ptype].round(2)
+
+    def ToCSV(self):
+        self.prices.to_csv(self.ticker + '.csv')
+
+    def Treat(self):
+        self.DropNaN()
+        self.DropColumns()
+        self.prices.columns = [self.ticker]
+        return self.prices
+
+#################################################################################
+def GetAVPrices(Tickers=None, Forex=None, start=None, end=None, Ptype=None):
+
+    if isinstance(start, str):
+        sday, smonth, syear = map(int, start.split('/'))
+        start = dt.datetime(syear, smonth, sday)
+    elif isinstance(start, dt.date):
+        pass
+    else:
+        raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date')
+
+    if isinstance(end, str):
+        if end == '':
+            end = date.today()
+        else:
+            eday, emonth, eyear = map(int, end.split('/'))
+            end = dt.datetime(eyear, emonth, eday)
+                         
+    elif isinstance(end, dt.date):
+            pass
+    else:                 
+        raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date')
+
+    if Tickers is not None:
+      df1 = seriesAV(Tickers[0], Ptype, start, end).Treat()
+      i = 1
+      
+      while i < len(Tickers):
+          s = seriesAV(Tickers[i], Ptype, start, end).Treat()
+          df1 = df1.join(s)
+
+          i += 1
+      print(df1)
+      if Forex is not None:
+        j = 0
+        while j < len(Forex):
+            s = seriesAVForex(Forex[j], Ptype, start, end).Treat()
+            df1 = df1.join(s)
+
+            j += 1
+    
+    elif Forex is not None:
+      df1 = seriesAVForex(Forex[0], Ptype, start, end).Treat()
+      j = 1
+      while j < len(Forex):
+          s = seriesAVForex(Forex[j], Ptype, start, end).Treat()
+          df1 = df1.join(s)
+
+          j += 1
 
     else:
-        eday, emonth, eyear = map(int, end.split('/'))
-        end = dt.datetime(eyear, emonth, eday)
-
-    df1 = seriesAV(Tickers[0], Ptype, start, end).Treat()
-
-    i = 1
-
-    while i < len(Tickers):
-        s = seriesAV(Tickers[i], Ptype, start, end).Treat()
-        df1 = df1.join(s)
-
-        i += 1
-
+      raise ValueError('Tem que querer algum dos dois.')
+    
     return df1
 
 #####################################################################################################
