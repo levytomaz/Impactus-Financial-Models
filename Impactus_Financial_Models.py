@@ -107,7 +107,7 @@ def GetDFPrices(Tickers, start, end, Ptype):
     elif isinstance(start, dt.date):
         pass
     else:
-        raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date)
+        raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date')
 
     if isinstance(end, str):
         if end == '':
@@ -119,7 +119,7 @@ def GetDFPrices(Tickers, start, end, Ptype):
     elif isinstance(end, dt.date):
             pass
     else:                 
-        raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date)
+        raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date')
                          
     df1 = series(Tickers[0], Ptype, start, end).Treat()
 
