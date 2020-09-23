@@ -211,7 +211,7 @@ class seriesAVForex:
             self.xyz = ['high', 'low', 'close']
         elif self.Ptype == 'close':
             self.xyz = ['high', 'low', 'open']
-        print(self.ticker)
+
         self.fr, self.to = map(str, self.ticker.split('/'))
 
         url = f'https://www.alphavantage.co/query?function=FX_DAILY&from_symbol={self.fr}&to_symbol={self.to}&outputsize=full&apikey={AVkey}'
@@ -221,7 +221,6 @@ class seriesAVForex:
         self.prices.columns = ['open', 'high', 'low', 'close']
         self.prices.index = pd.to_datetime(self.prices.index)
         self.prices = self.prices.loc[self.start:self.end, :]
-        print(self.prices, '\n', self.Ptype)
 
     def DropColumns(self):
         self.prices.drop(self.xyz, axis=1, inplace=True)
@@ -274,7 +273,7 @@ def GetAVPrices(Tickers=None, Forex=None, start=None, end=None, Ptype=None):
           df1 = df1.join(s)
 
           i += 1
-      print(df1)
+        
       if Forex is not None:
         j = 0
         while j < len(Forex):
