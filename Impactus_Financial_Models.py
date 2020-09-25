@@ -509,6 +509,20 @@ def RollVol(dfname, mode=None, window=100):
 
 #####################################################################################################
 #####################################################################################################
+def MDD(dfname, mode=None):
+    if mode is None:
+        df = dfname
+    elif mode == 'Price':
+        df = dfname
+
+    df2 = df.copy()
+    for i, row in enumerate(df.index):
+      df2.loc[row, :] = (df.loc[row, :] - df.loc[:row, :].max()) / df.loc[:row, :].max()
+
+    return df.min()
+
+#####################################################################################################
+#####################################################################################################
 def GetDFPrices2(AcoesBR, IndicesOuEUA, start, end):
     tickers = []
 
@@ -554,4 +568,3 @@ def GetDFPrices2(AcoesBR, IndicesOuEUA, start, end):
             main_df = main_df.join(df, how='outer')
 
     return main_df
-
