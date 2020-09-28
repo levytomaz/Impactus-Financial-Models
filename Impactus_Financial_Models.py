@@ -517,9 +517,9 @@ def MDD(dfname, mode=None):
 
     df2 = df.copy()
     for i, row in enumerate(df.index):
-      df2.loc[row, :] = (df.loc[row, :] - df.loc[:row, :].max()) / df.loc[:row, :].max()
+      df2.loc[row] = (df.loc[row] - df.loc[:row].max()) / df.loc[:row].max()
 
-    return df.min()
+    return df2.min()
 
 #####################################################################################################
 #####################################################################################################
