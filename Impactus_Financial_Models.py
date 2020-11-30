@@ -7,15 +7,11 @@
 #   'end': string da data final da série. ex: 'DD/MM/AAAA' ou '5/12/2013' ou '' para dia de hoje.
 #   'Ptype': preço a ser retornado. 'Adj Close' OU 'Close'
 
-#PVol(dfname, mode=): retorna a volatilidade anual de uma série de retornos
+#Vol(dfname, mode=): retorna a volatilidade anual de uma série de retornos
 #   'dfname': nome do DataFrame
 #   'mode': opcional, deixar vazio caso seja uma série de retornos. 'Price' caso seja uma série de preços
 
-#PVar(dfname, mode=): retorna a variância de uma série de retornos.
-#   'dfname': nome do dataframe
-#   'mode': opcional, deixar vazio caso seja uma série de retornos. 'Price' caso seja uma série de preços
-
-#PLogR(dfname): retorna os log retornos de um dataframe de preços
+#LogR(dfname): retorna os log retornos de um dataframe de preços
 #   'dfname': nome do dataframe
 
 #GetBacenData(Titulos, codigos_bcb): retorna um Precos com os dados retirados do API do BCB
@@ -293,6 +289,14 @@ def AV_Names(AtivosBR=None, Ativos=None):
 #####################################################################################################
 #####################################################################################################
 def Vol(dfname, mode=None):
+    if mode is None:
+        return dfname.std()*np.sqrt(252)
+    if mode == 'Price':
+        return dfname.pct_change().std()*np.sqrt(252)
+    
+#####################################################################################################
+#####################################################################################################
+def PVol(dfname, mode=None):
     if mode is None:
         return dfname.std()*np.sqrt(252)
     if mode == 'Price':
