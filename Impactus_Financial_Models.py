@@ -1,11 +1,4 @@
 #Funções:
-# PresentValue(list, rate): calcula o valor presente de uma lista de fluxos 'list'
-# a partir de uma taxa de desconto 'rate'
-
-#MA(nPeriods, dfname, origin): calcula uma média móvel simples
-#   'nPeriods': número de períodos da média móvel. ex: 100
-#   'dfname': nome do dataframe onde está a série de preços base e estará a média móvel. ex: Precos
-#   'origin': nome da coluna onde está a série de preços base. ex: 'MGLU3.SA'
 
 #GetDFPrices(AcoesBR, IndicesOuEUA, start, end, Ptype): retorna um dataframe com n séries de preços.
 #   'AcoesBR': lista de tickers de ações brasileiras (que o Yahoo Finance precisa de '.SA' para interpretar), ex: ['JBSS3'] ou vazio []
@@ -52,16 +45,6 @@ import datetime as dt
 from datetime import date
 import numpy as np
 import math
-
-###########################################################################################################
-def PresentValue(list, rate):
-    a = 0
-    x = 0
-    while a < len(list):
-        x = x + list[a]/pow(1 + rate, a)
-        a += 1
-    x = round(x, 2)
-    return x
 
 ##########################################################################################################
 ##########################################################################################################
@@ -161,7 +144,7 @@ class seriesAV:
         elif Ptype == 'Open':
             self.Pytpe = 'open'
         else:
-            raise ValueError('O Ptype tem que ser Adj Close ou Open, se quiser adiconar mais um, trate de abrir o Impactus_Financial_Models e alterar')
+            raise ValueError('O Ptype tem que ser Adj Close ou Open')
             
         self.start = start
         self.end = end
@@ -202,7 +185,7 @@ class seriesAVForex:
         elif Ptype == 'Open':
             self.Pytpe = 'open'
         else:
-            raise ValueError('O Ptype tem que ser Adj Close ou Open, se quiser adiconar mais um, trate de abrir o Impactus_Financial_Models e alterar')
+            raise ValueError('O Ptype tem que ser Adj Close ou Open')
             
         self.start = start
         self.end = end
@@ -309,13 +292,7 @@ def AV_Names(AtivosBR=None, Ativos=None):
 
 #####################################################################################################
 #####################################################################################################
-def MA(nPeriods, dfname, origin):
-    dfname[str(nPeriods) + 'ma'] = dfname[str(origin)].rolling(window=nPeriods, min_periods=0).mean()
-    dfname[str(nPeriods) + 'ma'] = dfname[str(nPeriods) + 'ma'].round(2)
-
-#####################################################################################################
-#####################################################################################################
-def PVol(dfname, mode=None):
+def Vol(dfname, mode=None):
     if mode is None:
         return dfname.std()*np.sqrt(252)
     if mode == 'Price':
@@ -329,15 +306,7 @@ def VolEWMA(dfname, mode=None):
 
 #####################################################################################################
 #####################################################################################################
-def PVar(dfname, mode=None):
-    if mode is None:
-        return dfname.var()
-    if mode == 'Price':
-        return dfname.pct_change().var()
-
-#####################################################################################################
-#####################################################################################################
-def PLogR(dfname):
+def LogR(dfname):
     return dfname.pct_change().apply(lambda x: np.log(1+x))
 
 #####################################################################################################
@@ -433,23 +402,6 @@ def CVaR(serie, confianca, mode=None):
 
 #####################################################################################################
 #####################################################################################################
-def Sharpe(dfname, mode=None):
-
-    if mode is None:
-        df = dfname
-
-    elif mode == 'Price':
-        df = PLogR(dfname)
-
-    elif mode == 'LinRet':
-        df = dfname.apply(lambda x: np.log(x + 1))
-
-    Sharpe = df.sum(axis=0) / (df.std(axis=0) * np.sqrt(252))
-
-    return Sharpe
-
-#####################################################################################################
-#####################################################################################################
 def UnderWater(dfname):
     uw = pd.DataFrame(index=dfname.index, columns=dfname.columns)
 
@@ -472,23 +424,6 @@ def Beta(Retornos, BenchMark, mode=None):
     Beta = rets.cov(BM) / BM.var()
 
     return Beta
-#####################################################################################################
-#####################################################################################################
-def RollBeta(dfname, Indice, mode=None, window=100):
-    if mode is None:
-        df = dfname
-        Ind = Indice
-    elif mode == 'Price':
-        df = PLogR(dfname)
-        Ind = PLogR(Indice)
-
-    RB = pd.DataFrame()
-    for coluna in df.columns:
-        RB[coluna] = df[coluna].rolling(window=window, min_periods=window).cov(Ind.iloc[:, 0]) / Ind.iloc[:, 0].rolling(window=window, min_periods=window).var()
-
-    RB.index = df.index
-
-    return RB
 
 #####################################################################################################
 #####################################################################################################
@@ -520,51 +455,3 @@ def MDD(dfname, mode=None):
       df2.loc[row] = (df.loc[row] - df.loc[:row].max()) / df.loc[:row].max()
 
     return df2.min()
-
-#####################################################################################################
-#####################################################################################################
-def GetDFPrices2(AcoesBR, IndicesOuEUA, start, end):
-    tickers = []
-
-    sday, smonth, syear = map(int, start.split('/'))
-    start = dt.datetime(syear, smonth, sday)
-
-    if end == '':
-        end = date.today()
-
-    else:
-        eday, emonth, eyear = map(int, end.split('/'))
-        end = dt.datetime(eyear, emonth, eday)
-
-    for i, Acao in enumerate(AcoesBR):
-        AcoesBR[i] = Acao.upper()
-    AcoesBR.sort()
-    for i, Acao in enumerate(IndicesOuEUA):
-        IndicesOuEUA[i] = Acao.upper()
-    IndicesOuEUA.sort()
-
-    if len(AcoesBR) != 0:
-        for item in AcoesBR:
-            tickers.append(item + '.SA')
-
-    if len(IndicesOuEUA) != 0:
-        for item in IndicesOuEUA:
-            tickers.append(item)
-
-    dict = {}
-    for ticker in tickers:
-        dict[ticker] = web.DataReader(ticker, 'yahoo', start, end)
-
-    main_df = pd.DataFrame()
-
-    for ticker in tickers:
-        df = dict[ticker]
-        df.rename(columns={'Adj Close': ticker}, inplace=True)
-        df.drop(['Open', 'High', 'Low', 'Close', 'Volume'], 1, inplace=True)
-
-        if main_df.empty:
-            main_df = df
-        else:
-            main_df = main_df.join(df, how='outer')
-
-    return main_df
