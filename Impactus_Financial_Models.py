@@ -1,10 +1,9 @@
 #Funções:
 
-#GetDFPrices(AcoesBR, IndicesOuEUA, start, end, Ptype): retorna um dataframe com n séries de preços.
-#   'AcoesBR': lista de tickers de ações brasileiras (que o Yahoo Finance precisa de '.SA' para interpretar), ex: ['JBSS3'] ou vazio []
-#   'IndicesOuEUA': lista de tickers de ações ou ickers que não recebem '.SA'. ex: ['^BVSP','AAL']
-#   'start': string da data de início da série. ex: 'DD/MM/AAAA' ou '5/12/2013'
-#   'end': string da data final da série. ex: 'DD/MM/AAAA' ou '5/12/2013' ou '' para dia de hoje.
+#GetDFPrices(Tickers, start, end, Ptype): retorna um dataframe com n séries de preços.
+#   'Tickers': lista de tickers. ex: ['JBSS3'] ou vazio []
+#   'start': string ou dt.datetime da data de início da série. ex: 'DD/MM/AAAA' ou '5/12/2013'
+#   'end': string ou dt.datetime da data final da série. ex: 'DD/MM/AAAA' ou '5/12/2013' ou '' para dia de hoje.
 #   'Ptype': preço a ser retornado. 'Adj Close' OU 'Close'
 
 #Vol(dfname, mode=): retorna a volatilidade anual de uma série de retornos
