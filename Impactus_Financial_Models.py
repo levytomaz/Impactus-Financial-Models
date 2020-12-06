@@ -369,6 +369,31 @@ def GetBacenData(Titulos, codigos_bcb, Start, End):
 
 #####################################################################################################
 #####################################################################################################
+def GetTesouroData(DataBase=None):
+    url = 'https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/PrecoTaxaTesouroDireto.csv'
+    df  = pd.read_csv(url, sep=';', decimal=',', index_col=2, parse_dates=[1,2], dayfirst=True)
+    df.replace({'Tesouro Selic': 'LFT',
+                'Tesouro Prefixado': 'LTN',
+                'Tesouro IPCA+': 'NTN-B Principal',
+                'Tesouro IPCA+ com Juros Semestrais': 'NTN-B',
+                'Tesouro IGPM+ com Juros Semestrais': 'NTN-C',
+                'Tesouro Prefixado com Juros Semestrais': 'NTN-F'}, inplace=True)
+  
+    if DataBase is None:
+      return df
+  
+    else:
+      if isinstance(DataBase, str):
+          DataBase = dt.datetime.strptime(DataBase, '%d/%m/%Y')
+      elif isinstance(DataBase, dt.date):
+          pass
+      else:
+          raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date')
+
+      return df.loc[DataBase, :]
+
+#####################################################################################################
+#####################################################################################################
 def VaR(serie, confianca, mode=None):
     if mode is None:
         return np.exp(serie.quantile(1 - (confianca/100))) - 1
