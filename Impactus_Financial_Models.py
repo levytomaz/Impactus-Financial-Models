@@ -383,7 +383,7 @@ def GetFutData(Dia=None, Mercadoria=None):
     else:
         source = request.urlopen(request.Request('http://www2.bmf.com.br/pages/portal/bmfbovespa/lumis/lum-ajustes-do-pregao-ptBR.asp')).read()
 
-    soup = bs.BeautifulSoup(source)
+    soup = bs.BeautifulSoup(source, 'lxml')
     day = dt.datetime.strptime(soup.find('input', {'id': 'dData1'}).get('value'), '%d/%m/%Y')
 
     df = pd.read_html(source, thousands='.', decimal=',')[0].ffill()
