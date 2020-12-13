@@ -37,9 +37,10 @@
 import pandas as pd
 import pandas_datareader.data as web
 import datetime as dt
-from datetime import date
 import numpy as np
 import math
+from urllib import request, parse
+import bs4 as bs
 
 ##########################################################################################################
 ##########################################################################################################
@@ -232,7 +233,7 @@ def GetAVPrices(Tickers=None, Forex=None, start=None, end=None, Ptype=None):
 
     if isinstance(end, str):
         if end == '':
-            end = date.today()
+            end = dt.date.today()
         else:
             eday, emonth, eyear = map(int, end.split('/'))
             end = dt.datetime(eyear, emonth, eday)
@@ -287,39 +288,12 @@ def AV_Names(AtivosBR=None, Ativos=None):
 
 #####################################################################################################
 #####################################################################################################
-def Vol(dfname, mode=None):
-    if mode is None:
-        return dfname.std()*np.sqrt(252)
-    if mode == 'Price':
-        return dfname.pct_change().std()*np.sqrt(252)
-    
-#####################################################################################################
-#####################################################################################################
-def PVol(dfname, mode=None):
-    if mode is None:
-        return dfname.std()*np.sqrt(252)
-    if mode == 'Price':
-        return dfname.pct_change().std()*np.sqrt(252)
-
-#####################################################################################################
-#####################################################################################################
-def VolEWMA(dfname, mode=None):
-    if mode is None:
-        return dfname.ewm(alpha=0.94).std().iloc[-1] * np.sqrt(252)
-
-#####################################################################################################
-#####################################################################################################
-def LogR(dfname):
-    return dfname.pct_change().apply(lambda x: np.log(1+x))
-
-#####################################################################################################
-#####################################################################################################
 def GetFredData(ticker, start, end):
     sday, smonth, syear = map(int, start.split('/'))
     start = dt.datetime(syear, smonth, sday)
 
     if end == '':
-        end = date.today()
+        end = dt.date.today()
 
     else:
         eday, emonth, eyear = map(int, end.split('/'))
@@ -334,7 +308,7 @@ def GetEcondbData(query, start, end, coluna):
     start = dt.datetime(syear, smonth, sday)
 
     if end == '':
-        end = date.today()
+        end = dt.date.today()
 
     else:
         eday, emonth, eyear = map(int, end.split('/'))
@@ -391,6 +365,68 @@ def GetTesouroData(DataBase=None):
           raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date')
 
       return df.loc[DataBase, :]
+
+#####################################################################################################
+#####################################################################################################
+def GetFutData(Dia=None, Mercadoria=None):
+
+    if isinstance(Dia, str):
+        pass
+    elif isinstance(Dia, dt.date):
+        Dia = Dia.strftime('%d/%m/%Y')
+    else:
+        raise ValueError('As datas tem que estar no formato str dd/mm/yyy ou no formate dt.date')
+
+    if Dia is not None:
+        data = parse.urlencode({'dData1': Dia}).encode()
+        source = request.urlopen(request.Request('http://www2.bmf.com.br/pages/portal/bmfbovespa/lumis/lum-ajustes-do-pregao-ptBR.asp', data=data)).read()
+    else:
+        source = request.urlopen(request.Request('http://www2.bmf.com.br/pages/portal/bmfbovespa/lumis/lum-ajustes-do-pregao-ptBR.asp')).read()
+
+    soup = bs.BeautifulSoup(source)
+    day = dt.datetime.strptime(soup.find('input', {'id': 'dData1'}).get('value'), '%d/%m/%Y')
+
+    df = pd.read_html(source, thousands='.', decimal=',')[0].ffill()
+    df['Mercadoria'] = df['Mercadoria'].apply(lambda x: x.split('-')[0][:-1])
+    df.index = [day for i in df.index]
+
+    if Mercadoria is not None:
+        if isinstance(Mercadoria, str):
+          Mercadoria = [Mercadoria]
+        elif isinstance(Mercadoria, list):
+          pass
+
+        return df[df['Mercadoria'].isin(Mercadoria)]
+
+    else:
+        return df
+#####################################################################################################
+#####################################################################################################
+def Vol(dfname, mode=None):
+    if mode is None:
+        return dfname.std()*np.sqrt(252)
+    if mode == 'Price':
+        return dfname.pct_change().std()*np.sqrt(252)
+    
+#####################################################################################################
+#####################################################################################################
+def PVol(dfname, mode=None):
+    if mode is None:
+        return dfname.std()*np.sqrt(252)
+    if mode == 'Price':
+        return dfname.pct_change().std()*np.sqrt(252)
+
+#####################################################################################################
+#####################################################################################################
+def VolEWMA(dfname, mode=None):
+    if mode is None:
+        return dfname.ewm(alpha=0.94).std().iloc[-1] * np.sqrt(252)
+
+#####################################################################################################
+#####################################################################################################
+def LogR(dfname):
+    return dfname.pct_change().apply(lambda x: np.log(1+x))
+
 
 #####################################################################################################
 #####################################################################################################
