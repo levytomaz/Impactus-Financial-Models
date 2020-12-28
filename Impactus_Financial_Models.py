@@ -90,7 +90,7 @@ def GetDFPrices(Tickers, start, end, Ptype):
 
     if isinstance(end, str):
         if end == '':
-            end = date.today()
+            end = dt.date.today()
         else:
             eday, emonth, eyear = map(int, end.split('/'))
             end = dt.datetime(eyear, emonth, eday)
